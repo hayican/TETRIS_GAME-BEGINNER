@@ -1,6 +1,25 @@
 const canvas = document.getElementById('tetris');
 const context = canvas.getContext('2d');
 
+let dropCounter = 0;
+let dropInterval = 1000;
+let lastTime = 0;
+
+let ispaused = false;
+let animationid = null;
+
+function playerDrop() {
+player.pos.y++;
+    
+    if (collide(arena, player)) {
+        player.pos.y--;
+        merge(arena, player);
+        playerReset();
+        arenaSweep();
+    }
+    dropCounter = 0;
+}
+
 function createMatrix(w, h) {
     const matrix = [];
     while (h--) {
@@ -36,11 +55,52 @@ function merge(arena, player) {
 
 context.scale(30, 30);
 
-const matrix = [
-    [0, 0, 0],
-    [1, 1, 1],
-    [0, 1, 0],
-];
+// Fungsi buat nyetak matriks berdasarkan tipe balok
+function createPiece(type) {
+    if (type === 'T') {
+        return [
+            [0, 0, 0],
+            [1, 1, 1],
+            [0, 1, 0],
+        ];
+    } else if (type === 'O') {
+        return [
+            [2, 2],
+            [2, 2],
+        ];
+    } else if (type === 'L') {
+        return [
+            [0, 3, 0],
+            [0, 3, 0],
+            [0, 3, 3],
+        ];
+    } else if (type === 'J') {
+        return [
+            [0, 4, 0],
+            [0, 4, 0],
+            [4, 4, 0],
+        ];
+    } else if (type === 'I') {
+        return [
+            [0, 5, 0, 0],
+            [0, 5, 0, 0],
+            [0, 5, 0, 0],
+            [0, 5, 0, 0],
+        ];
+    } else if (type === 'S') {
+        return [
+            [0, 6, 6],
+            [6, 6, 0],
+            [0, 0, 0],
+        ];
+    } else if (type === 'Z') {
+        return [
+            [7, 7, 0],
+            [0, 7, 7],
+            [0, 0, 0],
+        ];
+    }
+}
 
 function drawMatrix(matrix, offset) {
     matrix.forEach((row, y) => {
@@ -54,9 +114,24 @@ function drawMatrix(matrix, offset) {
 }
 
 const player = {
-    pos: {x: 3, y: 3},
-    matrix: matrix,
+    pos: {x: 0, y: 0},
+    matrix: null,
 };
+
+function playerReset() {
+    const pieces = 'ILJOTSZ';
+    const randomPiece = pieces[pieces.length * Math.random() | 0];
+    
+    player.matrix = createPiece(randomPiece);
+    player.pos.y = 0;
+    
+    player.pos.x = (Math.floor(arena[0].length / 2)) - 
+                   (Math.floor(player.matrix[0].length / 2));
+                   
+    if (collide(arena, player)) {
+        arena.forEach(row => row.fill(0)); 
+    }
+}
 
 function draw() {
     context.fillStyle = '#111';
@@ -65,21 +140,7 @@ function draw() {
     drawMatrix(player.matrix, player.pos);
 }
 
-draw();
-let dropCounter = 0;
-let dropInterval = 1000;
-let lastTime = 0;
 
-function playerDrop() {
-    player.pos.y++;
-    if (collide(arena, player)) {
-        player.pos.y--;
-        merge(arena, player);
-        player.pos.y = 0;
-        player.pos.x = 3;
-    }
-    dropCounter = 0;
-}
 
 function playerMove(dir) {
     player.pos.x += dir;
@@ -124,31 +185,65 @@ function playerRotate(dir) {
     }
 }
 
-// Nguping ketukan keyboard dari player
-document.addEventListener('keydown', event => {
-    if (event.key === 'ArrowLeft') {
-        playerMove(-1); // Panah Kiri: Geser kiri
-    } else if (event.key === 'ArrowRight') {
-        playerMove(1);  // Panah Kanan: Geser kanan
-    } else if (event.key === 'ArrowDown') {
-        playerDrop();   // Panah Bawah: Biar balok jatuh lebih cepet
-    } else if (event.key === 'q' || event.key === 'Q') {
-        playerRotate(-1); // Tombol Q: Putar balik arah jarum jam
-    } else if (event.key === 'w' || event.key === 'W') {
-        playerRotate(1);  // Tombol W: Putar searah jarum jam
-    }
-});
 
 function update(time = 0) {
+    if (ispaused) return;
+    
     const deltaTime = time - lastTime;
     lastTime = time;
     dropCounter += deltaTime;
+
     if (dropCounter > dropInterval) {
         playerDrop();
     }
-
+    
     draw();
     requestAnimationFrame(update);
 }
 
+function arenaSweep() {
+    outer: for (let y = arena.length - 1; y >= 0; --y) {
+        for (let x = 0; x < arena[y].length; ++x) {
+            if (arena[y][x] === 0) {
+                continue outer;
+            }
+        }
+        const row = arena.splice(y, 1)[0].fill(0);
+        arena.unshift(row);
+        ++y;
+    }
+}
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'ArrowLeft') {
+        playerMove(-1);
+    } else if (event.key === 'ArrowRight') {
+        playerMove(1);
+    } else if (event.key === 'ArrowDown') {
+        playerDrop();
+    } else if (event.key === 'q' || event.key === 'Q') {
+        playerRotate(-1);
+    } else if (event.key === 'w' || event.key === 'W') {
+        playerRotate(1);
+    }
+});
+
+document.getElementById('play-btn') .addEventListener('click', () => {
+    ispaused = !ispaused;
+
+    if (!ispaused) {
+        update();
+    }
+});
+
+document.getElementById('reset-btn').addEventListener('click', () => {
+    arena.forEach(row => row.fill(0));
+
+    playerReset();
+
+    draw(); 
+});
+
+
+playerReset();
 update();

@@ -22,9 +22,19 @@ let dropCounter = 0;
 let dropInterval = 1000;
 let lastTime = 0;
 
+// Variabel Skor dan ambil best score
+let score = 0;
+let bestScore = localStorage.getItem('tetrisBestScore') || 0;
+
 // Variabel Pause
 let isPaused = true; 
 let animationId = null;
+
+// Fungsi buat nampilin skor ke HTML
+function updateScoreUI() {
+    document.getElementById('score').innerText = score;
+    document.getElementById('best-score').innerText = bestScore;
+}
 
 // Fungsi Bikin Matriks (Arena)
 function createMatrix(w, h) {
@@ -157,6 +167,8 @@ function playerDrop() {
     if (collide(arena, player)) {
         player.pos.y--;
         merge(arena, player);
+        score += 100;
+        updateScoreUI();
         playerReset();
         arenaSweep();
     }
@@ -219,15 +231,23 @@ function playerReset() {
     
     player.pos.x = (Math.floor(arena[0].length / 2)) - 
                    (Math.floor(player.matrix[0].length / 2));
-                   
+
+
     if (collide(arena, player)) {
         arena.forEach(row => row.fill(0)); 
+        
+        if (score > bestScore) {
+            bestScore = score;
+            localStorage.setItem('tetrisBestScore', bestScore); 
+        }
+        score = 0;
+        updateScoreUI(); 
     }
 }
 
-// Jantung Game (Siklus Utama)
+// siklus Game Loop
 function update(time = 0) {
-    if (isPaused) return; // <--- Tadi di kode lu tulisannya ispaused (p kecil)
+    if (isPaused) return;
     
     const deltaTime = time - lastTime;
     lastTime = time;
@@ -278,5 +298,6 @@ document.getElementById('reset-btn').addEventListener('click', () => {
 });
 
 // Mulai Game
+updateScoreUI();
 playerReset();
 update();

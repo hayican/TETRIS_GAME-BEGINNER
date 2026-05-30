@@ -311,28 +311,29 @@ document.addEventListener('keydown', event => {
     }
 });
 
+
+// btn play/pause
 const playBtn = document.getElementById('play-btn');
 
 playBtn.addEventListener('click', () => {
-    if (gameState === 'gameover') return; // Kalau udah mati, tombol ini ga guna (wajib klik reset)
+    if (gameState === 'gameover') return; // Kalau udah mati, wajib klik reset
 
     if (gameState === 'idle') {
-        // ANIMASI READY GO!
         gameState = 'ready';
         readyText = 'Ready?';
         draw();
-        playBtn.disabled = true; // Matiin tombol sementara biar gak dispam player
+        playBtn.disabled = true; 
 
         setTimeout(() => {
             readyText = 'Go!';
-            draw(); // Gambar ulang jadi tulisan Go!
+            draw(); 
 
             setTimeout(() => {
                 gameState = 'playing';
                 isPaused = false;
-                playBtn.disabled = false; // Nyalain lagi tombolnya
+                playBtn.disabled = false;
                 playBtn.innerText = "Pause Game";
-                update(); // Gas jalanin gamenya!
+                update(); 
             }, 1000);
         }, 1000);
 
@@ -351,47 +352,18 @@ playBtn.addEventListener('click', () => {
     }
 });
 
-// btn play/pause
-const playBtn = document.getElementById('play-btn');
-
-playBtn.addEventListener('click', () => {
-    if (gameState === 'gameover') return;
-
-    if (gameState === 'idle') {
-        gameState = 'ready';
-        readyText = 'Ready?';
-        draw();
-        playBtn.disabled = true; 
-
-        setTimeout(() => {
-            readyText = 'Go!';
-            draw(); 
-
-            setTimeout(() => {
-                gameState = 'playing';
-                isPaused = false;
-                playBtn.disabled = false;
-                playBtn.innerText = "Pause Game";
-                update();
-            }, 1000);
-        }, 1000);
-
-    } else if (gameState === 'playing') {
-        gameState = 'paused';
-        isPaused = true;
-        playBtn.innerText = "Resume Game";
-        draw(); 
-    } else if (gameState === 'paused') {
-        gameState = 'playing';
-        isPaused = false;
-        playBtn.innerText = "Pause Game";
-        update();
-    }
-});
-
 // Tombol Reset
 document.getElementById('reset-btn').addEventListener('click', () => {
     arena.forEach(row => row.fill(0));
+    
+    score = 0;
+    updateScoreUI();
+    
+    gameState = 'idle';
+    isPaused = true;
+    playBtn.innerText = "Start Game";
+    playBtn.disabled = false;
+    
     playerReset();
     draw(); 
 });

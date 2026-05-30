@@ -30,6 +30,9 @@ let bestScore = localStorage.getItem('tetrisBestScore') || 0;
 let isPaused = true; 
 let animationId = null;
 
+// Variabel Status Game
+let gameState = 'idle';
+
 // Fungsi buat nampilin skor ke HTML
 function updateScoreUI() {
     document.getElementById('score').innerText = score;
@@ -43,6 +46,24 @@ function createMatrix(w, h) {
         matrix.push(new Array(w).fill(0));
     }
     return matrix;
+}
+
+// Fungsi Teks Tengah
+function drawText(text) {
+    context.save();
+    context.scale(1/30, 1/30);
+    
+    context.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    context.font = '30px Arial';
+    context.fillStyle = 'white';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    
+    context.fillText(text, canvas.width / 2, canvas.height / 2);
+    
+    context.restore();
 }
 
 // Bikin Arena 10x20
@@ -118,7 +139,18 @@ function draw() {
     context.fillStyle = '#111';
     context.fillRect(0, 0, canvas.width, canvas.height);
     drawMatrix(arena, {x: 0, y: 0});
-    drawMatrix(player.matrix, player.pos);
+
+    if (gameState !== 'gameover') {
+        drawMatrix(player.matrix, player.pos);
+    }
+
+    if (gameState === 'paused') {
+        drawText('Paused');
+    } else if (gameState === 'gameover') {
+        drawText('Game Over T_T');
+    } else if (gameState === 'ready') {
+        drawText(readyText);
+    }
 }
 
 // Fungsi Sensor Deteksi Tabrakan
@@ -234,7 +266,7 @@ function playerReset() {
 
 
     if (collide(arena, player)) {
-        arena.forEach(row => row.fill(0)); 
+        gameState = 'gameover'; 
         
         if (score > bestScore) {
             bestScore = score;
@@ -242,12 +274,13 @@ function playerReset() {
         }
         score = 0;
         updateScoreUI(); 
+        draw();
     }
 }
 
 // siklus Game Loop
 function update(time = 0) {
-    if (isPaused) return;
+    if (isPaused || gameState !== 'playing') return;
     
     const deltaTime = time - lastTime;
     lastTime = time;
@@ -263,6 +296,8 @@ function update(time = 0) {
 
 // Kontrol Keyboard
 document.addEventListener('keydown', event => {
+    if (gameState !== 'playing') return;
+
     if (event.key === 'ArrowLeft') {
         playerMove(-1);
     } else if (event.key === 'ArrowRight') {
@@ -276,17 +311,81 @@ document.addEventListener('keydown', event => {
     }
 });
 
-// Tombol Play / Pause
 const playBtn = document.getElementById('play-btn');
 
 playBtn.addEventListener('click', () => {
-    isPaused = !isPaused; 
+    if (gameState === 'gameover') return; // Kalau udah mati, tombol ini ga guna (wajib klik reset)
 
-    if (!isPaused) {
-        update();
-        playBtn.innerText = "Pause Game";
-    } else {
+    if (gameState === 'idle') {
+        // ANIMASI READY GO!
+        gameState = 'ready';
+        readyText = 'Ready?';
+        draw();
+        playBtn.disabled = true; // Matiin tombol sementara biar gak dispam player
+
+        setTimeout(() => {
+            readyText = 'Go!';
+            draw(); // Gambar ulang jadi tulisan Go!
+
+            setTimeout(() => {
+                gameState = 'playing';
+                isPaused = false;
+                playBtn.disabled = false; // Nyalain lagi tombolnya
+                playBtn.innerText = "Pause Game";
+                update(); // Gas jalanin gamenya!
+            }, 1000);
+        }, 1000);
+
+    } else if (gameState === 'playing') {
+        // FUNGSI PAUSE
+        gameState = 'paused';
+        isPaused = true;
         playBtn.innerText = "Resume Game";
+        draw(); 
+    } else if (gameState === 'paused') {
+        // FUNGSI RESUME
+        gameState = 'playing';
+        isPaused = false;
+        playBtn.innerText = "Pause Game";
+        update();
+    }
+});
+
+// btn play/pause
+const playBtn = document.getElementById('play-btn');
+
+playBtn.addEventListener('click', () => {
+    if (gameState === 'gameover') return;
+
+    if (gameState === 'idle') {
+        gameState = 'ready';
+        readyText = 'Ready?';
+        draw();
+        playBtn.disabled = true; 
+
+        setTimeout(() => {
+            readyText = 'Go!';
+            draw(); 
+
+            setTimeout(() => {
+                gameState = 'playing';
+                isPaused = false;
+                playBtn.disabled = false;
+                playBtn.innerText = "Pause Game";
+                update();
+            }, 1000);
+        }, 1000);
+
+    } else if (gameState === 'playing') {
+        gameState = 'paused';
+        isPaused = true;
+        playBtn.innerText = "Resume Game";
+        draw(); 
+    } else if (gameState === 'paused') {
+        gameState = 'playing';
+        isPaused = false;
+        playBtn.innerText = "Pause Game";
+        update();
     }
 });
 

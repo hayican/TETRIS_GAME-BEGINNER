@@ -29,6 +29,7 @@ button {
     padding: 10px 20px;
     font-size: 16px;
     font-weight: bold;
+    font-family: "Pixelify Sans", sans-serif;
     cursor: pointer;
     background-color: #e74c3c;
     color: white;
@@ -55,7 +56,7 @@ button:hover {
     width: 300px;
     margin-bottom: 10px;
     color: white;
-    font-family: Arial, sans-serif;
+    font-family: "Pixelify Sans", sans-serif;
     font-size: 20px;
     font-weight: bold;
     background-color: #111;

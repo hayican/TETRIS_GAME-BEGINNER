@@ -56,7 +56,7 @@ function drawText(text) {
     context.fillStyle = 'rgba(0, 0, 0, 0.5)';
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    context.font = '30px Arial';
+    context.font = '30px "Pixelify Sans", sans-serif';
     context.fillStyle = 'white';
     context.textAlign = 'center';
     context.textBaseline = 'middle';
@@ -369,6 +369,8 @@ document.getElementById('reset-btn').addEventListener('click', () => {
 });
 
 // Mulai Game
-updateScoreUI();
-playerReset();
-update();
+document.fonts.ready.then(() => {
+    updateScoreUI();
+    playerReset();
+    update();
+});
